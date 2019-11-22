@@ -79,12 +79,17 @@ public class Grid : MonoBehaviour
 
     public static void VisualizeGrids()
     {
-
+        startGrid.ExecuteVisualizationProcedure(startGrid.transform.position, GameProperties.GetGridDimensions());
     }
 
     private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale)
     {
-
+        transform.position = pos;
+        transform.localScale = scale;
+        gridRelations.ExecuteOnNonNullGrids(delegate (Grid g, Vector2 v)
+        {
+            g.ExecuteVisualizationProcedure(new Vector3(pos.x + (scale.x / 2) * v.x, pos.y, pos.z + (scale.z / 2) * v.y), scale);
+        });
     }
 
     #endregion
@@ -103,6 +108,7 @@ public struct GridRelations
     public Grid bottomLeftGrid;
     public Grid leftGrid;
     public Grid upperLeftGrid;
+
 
     public Grid GetGrid(byte directionID)
     {
@@ -134,6 +140,63 @@ public struct GridRelations
         return new Grid[] { upperGrid, upperRightGrid, rightGrid, bottomRightGrid, bottomGrid, bottomLeftGrid, leftGrid, upperLeftGrid };
     }
 
+    public GridRelation GetGridRelation(byte directionID)
+    {
+        switch (directionID)
+        {
+            case 0:
+                return new GridRelation(upperGrid, new Vector2(0,1));
+            case 1:
+                return new GridRelation(upperRightGrid, new Vector2(1, 1).normalized);
+            case 2:
+                return new GridRelation(rightGrid, new Vector2(1,0));
+            case 3:
+                return new GridRelation(bottomRightGrid, new Vector2(1,-1).normalized);
+            case 4:
+                return new GridRelation(bottomGrid, new Vector2(0,-1));
+            case 5:
+                return new GridRelation(bottomLeftGrid, new Vector2(-1,-1).normalized);
+            case 6:
+                return new GridRelation(leftGrid, new Vector2(-1,0));
+            case 7:
+                return new GridRelation(upperLeftGrid, new Vector2(-1,1).normalized);
+        }
+
+        throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+    }
+
+    public GridRelation[] GetGridRelations()
+    {
+        GridRelation[] relations = new GridRelation[8];
+        for(byte i = 0; i < 8; i++)
+        {
+            relations[i] = GetGridRelation(i);
+        }
+        return relations;
+    }
+
+    public void ExecuteOnNonNullGrids(Action<Grid, Vector2> action)
+    {
+        GridRelation[] gridRelations = GetGridRelations();
+        foreach(GridRelation g in gridRelations)
+        {
+            if (g.grid == null)
+                continue;
+
+            action(g.grid, g.direction);
+        }
+    }
 
 }
 
+public struct GridRelation
+{
+    public Vector2 direction;
+    public Grid grid;
+
+    public GridRelation(Grid g, Vector2 d)
+    {
+        direction = d;
+        grid = g;
+    }
+}
