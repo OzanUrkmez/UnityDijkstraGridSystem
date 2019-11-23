@@ -8,7 +8,7 @@ public class Grid : MonoBehaviour
 {
 
     [SerializeField]
-    private GridRelations gridRelations;
+    private GridRelations gridRelations; //you have to pass in an array of 8, even if some values are null.
 
     private static Grid startGrid;
 
@@ -105,69 +105,72 @@ public class Grid : MonoBehaviour
 [Serializable]
 public struct GridRelations
 {
-    public Grid upperGrid;
-    public Grid upperRightGrid;
-    public Grid rightGrid;
-    public Grid bottomRightGrid;
-    public Grid bottomGrid;
-    public Grid bottomLeftGrid;
-    public Grid leftGrid;
-    public Grid upperLeftGrid;
+    public Grid[] relatedGrids; //clockwise, starting from 0 = upperGrid
+
+    public GridRelations(bool created = true)
+    {
+        relatedGrids = new Grid[8]; 
+    }
 
 
     public Grid GetGrid(byte directionID)
     {
-        switch (directionID)
+        try
         {
-            case 0:
-                return upperGrid;
-            case 1:
-                return upperRightGrid;
-            case 2:
-                return rightGrid;
-            case 3:
-                return bottomRightGrid;
-            case 4:
-                return bottomGrid;
-            case 5:
-                return bottomLeftGrid;
-            case 6:
-                return leftGrid;
-            case 7:
-                return upperLeftGrid;
+            return relatedGrids[directionID];
         }
-
-        throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+        catch
+        {
+            throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+        }
     }
 
     public Grid[] GetGrids()
     {
-        return new Grid[] { upperGrid, upperRightGrid, rightGrid, bottomRightGrid, bottomGrid, bottomLeftGrid, leftGrid, upperLeftGrid };
+        return relatedGrids;
+    }
+
+    public Vector2 GetIDDirection(byte directionID)
+    {
+        try
+        {
+            switch (directionID)
+            {
+                case 0:
+                    return new Vector2(0, 1);
+                case 1:
+                    return new Vector2(1, 1).normalized;
+                case 2:
+                    return new Vector2(1, 0);
+                case 3:
+                    return  new Vector2(1, -1).normalized;
+                case 4:
+                    return  new Vector2(0, -1);
+                case 5:
+                    return new Vector2(-1, -1).normalized;
+                case 6:
+                    return  new Vector2(-1, 0);
+                case 7:
+                    return  new Vector2(-1, 1).normalized;
+            }
+        }
+        catch
+        {
+            throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+        }
+        return Vector2.negativeInfinity;
     }
 
     public GridRelation GetGridRelation(byte directionID)
     {
-        switch (directionID)
+        try
         {
-            case 0:
-                return new GridRelation(upperGrid, new Vector2(0,1));
-            case 1:
-                return new GridRelation(upperRightGrid, new Vector2(1, 1).normalized);
-            case 2:
-                return new GridRelation(rightGrid, new Vector2(1,0));
-            case 3:
-                return new GridRelation(bottomRightGrid, new Vector2(1,-1).normalized);
-            case 4:
-                return new GridRelation(bottomGrid, new Vector2(0,-1));
-            case 5:
-                return new GridRelation(bottomLeftGrid, new Vector2(-1,-1).normalized);
-            case 6:
-                return new GridRelation(leftGrid, new Vector2(-1,0));
-            case 7:
-                return new GridRelation(upperLeftGrid, new Vector2(-1,1).normalized);
+             return new GridRelation(relatedGrids[directionID], GetIDDirection(directionID));
         }
-
-        throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+        catch
+        {
+            throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
+        }
     }
 
     public GridRelation[] GetGridRelations()
