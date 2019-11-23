@@ -14,6 +14,8 @@ public class Grid : MonoBehaviour
 
     private static DijkstraMap<Grid> gridMap;
 
+    private bool positionSet = false;
+
     #region Unity and Instantiation
 
     // Start is called before the first frame update
@@ -24,7 +26,7 @@ public class Grid : MonoBehaviour
         {
             if (g == null)
                 continue;
-            nodeLinks.Add(new DijkstraMap<Grid>.NodeLink() { distance = 1, endObject = g });
+            nodeLinks.Add(new DijkstraMap<Grid>.NodeLink() { distance = 1, endObject = g }); //you may modify the distances for some interesting effects. Here, however, a more conventional definition was used.
         }
         gridMap.AddNode(this, nodeLinks);
         if(startGrid == null)
@@ -86,9 +88,12 @@ public class Grid : MonoBehaviour
     {
         transform.position = pos;
         transform.localScale = scale;
+        positionSet = true;
         gridRelations.ExecuteOnNonNullGrids(delegate (Grid g, Vector2 v)
         {
-            g.ExecuteVisualizationProcedure(new Vector3(pos.x + (scale.x / 2) * v.x, pos.y, pos.z + (scale.z / 2) * v.y), scale);
+            if (g.positionSet)
+                return;
+            g.ExecuteVisualizationProcedure(new Vector3(pos.x + (scale.x / 2) * v.x, pos.y, pos.z + (scale.z / 2) * v.y), scale); //if you change this you can create a non-symmetrical Grid system with this code. Like some grids can be larger than others etc. Of course you'd also have to change the relations and the distances in the pathfinding system. Nonetheless some interesting behaviour may be created.
         });
     }
 
