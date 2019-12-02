@@ -77,6 +77,11 @@ public class Grid : MonoBehaviour
         gridMap = new DijkstraMap<Grid>();
     }
 
+    public static Stack<Grid> PathFind(Grid source, Grid goal)
+    {
+        return gridMap.FindPath(source, goal);
+    }
+
     #endregion
 
     #region Visualization
