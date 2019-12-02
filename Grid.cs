@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-
+using QuestryGameGeneral.PathFinding;
 public class Grid : MonoBehaviour
 {
 
