@@ -31,6 +31,7 @@ public class Grid : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        gridRelations.ConstructDictionary();
         if (isStartGrid)
         {
             startGrid = this;
@@ -103,14 +104,14 @@ public class Grid : MonoBehaviour
         startGrid.ExecuteVisualizationProcedure(startGrid.transform.position, GameProperties.GetGridDimensions());
     }
 
-    private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale, Stack<Grid> callerGrids = null)
+    private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale, Queue<Grid> callerGrids = null)
     {
         transform.position = pos;
         transform.localScale = scale;
         positionSet = true;
         if (callerGrids == null)
-            callerGrids = new Stack<Grid>();
-        callerGrids.Push(this);
+            callerGrids = new Queue<Grid>();
+        callerGrids.Enqueue(this);
         gridRelations.ExecuteOnNonNullGrids(delegate (Grid g, Vector2 v)
         {
             if (g.positionSet)
@@ -126,6 +127,8 @@ public class Grid : MonoBehaviour
     {
         Grid prevCaller = this;
         Grid caller = this;
+        g.gridRelations.AddUpdateGrid(GridRelations.DirectionToID(-v), caller);
+        gridMap.AddModifyNodeLink(g, caller, 1);
         for (int j = 0; j < autoLinkGenerationDepth && callerGrids.Count > 0; j++)
         {
             prevCaller = caller;
@@ -134,8 +137,7 @@ public class Grid : MonoBehaviour
             {
                 v += GridRelations.GetIDDirection(caller.gridRelations.GetGridDirection(prevCaller));
             }
-            g.gridRelations.AddUpdateGrid(GridRelations.DirectionToID(-v), caller);
-            gridMap.AddModifyNodeLink(g, caller, 1);
+            
             for (byte i = 0; i < 8; i++)
             {
                 byte id = GridRelations.DirectionToID(GridRelations.GetIDDirection(i) - v);
@@ -163,11 +165,10 @@ public struct GridRelations
     private Grid[] relatedGrids; //clockwise, starting from 0 = upperGrid
     private Dictionary<Grid, byte> relatedGridsToDirection;
 
-    public GridRelations(bool created = true)
+    public void ConstructDictionary()
     {
-        relatedGrids = new Grid[8];
         relatedGridsToDirection = new Dictionary<Grid, byte>();
-        for(byte i = 0; i < 8; i++)
+        for (byte i = 0; i < 8; i++)
         {
             if (relatedGrids[i] == null)
                 continue;
@@ -198,7 +199,7 @@ public struct GridRelations
     public void AddUpdateGrid(byte directionID, Grid g) //interestingly enough if you were to add a grid to a different direction later on, as the transform position would not be updated, visual directions and grid system directions could be conflated, creating some cool effects.
     {
         relatedGrids[directionID] = g;
-        relatedGridsToDirection.Add(g, directionID);
+        relatedGridsToDirection[g] = directionID;
     }
 
     public Grid[] GetGrids()
