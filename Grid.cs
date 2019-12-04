@@ -111,12 +111,18 @@ public class Grid : MonoBehaviour
     private void SemiAutomatizeRelations(Grid g, Vector2 v) //delete or do not call this if you would like even higher flexibility.
     {
         g.gridRelations.relatedGrids[GridRelations.DirectionToID(-v)] = this;
+        gridMap.AddModifyNodeLink(g, this, 1);
         for (byte i = 0; i < 8; i++)
         {
             byte id = GridRelations.DirectionToID(GridRelations.GetIDDirection(i) - v);
             if (id == 255)
                 continue;
-            g.gridRelations.relatedGrids[id] = gridRelations.GetGrid(i);
+            Grid g2 = gridRelations.GetGrid(i);
+            if (g2 != null)
+            {
+                g.gridRelations.relatedGrids[id] = gridRelations.GetGrid(i);
+                gridMap.AddModifyNodeLink(g, gridRelations.GetGrid(i), 1);
+            }
         }
     }
 
