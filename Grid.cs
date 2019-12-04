@@ -14,7 +14,7 @@ public class Grid : MonoBehaviour
 
     private static Grid startGrid;
 
-    private static DijkstraMap<Grid> gridMap;
+    private static DijkstraMap<Grid> gridMap = new DijkstraMap<Grid>();
 
     private bool positionSet = false;
 
@@ -23,6 +23,10 @@ public class Grid : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (isStartGrid)
+        {
+            startGrid = this;
+        }
         List<DijkstraMap<Grid>.NodeLink> nodeLinks = new List<DijkstraMap<Grid>.NodeLink>();
         foreach(Grid g in gridRelations.GetGrids())
         {
@@ -30,11 +34,9 @@ public class Grid : MonoBehaviour
                 continue;
             nodeLinks.Add(new DijkstraMap<Grid>.NodeLink() { distance = 1, endObject = g }); //you may modify the distances for some interesting effects. Here, however, a more conventional definition was used.
         }
+
         gridMap.AddNode(this, nodeLinks);
-        if(isStartGrid)
-        {
-            startGrid = this;
-        }
+   
     }
 
     // Update is called once per frame
