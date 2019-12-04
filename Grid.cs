@@ -132,9 +132,9 @@ public class Grid : MonoBehaviour
             caller = callerGrids.Pop();
             if(prevCaller != caller)
             {
-               v += caller.gridRelations
+                v += GridRelations.GetIDDirection(caller.gridRelations.GetGridDirection(prevCaller));
             }
-            g.gridRelations.relatedGrids[GridRelations.DirectionToID(-v)] = caller;
+            g.gridRelations.AddUpdateGrid(GridRelations.DirectionToID(-v), caller);
             gridMap.AddModifyNodeLink(g, caller, 1);
             for (byte i = 0; i < 8; i++)
             {
@@ -144,7 +144,7 @@ public class Grid : MonoBehaviour
                 Grid g2 = caller.gridRelations.GetGrid(i);
                 if (g2 != null)
                 {
-                    g.gridRelations.relatedGrids[id] = caller.gridRelations.GetGrid(i);
+                    g.gridRelations.AddUpdateGrid(id,  caller.gridRelations.GetGrid(i));
                     gridMap.AddModifyNodeLink(g, caller.gridRelations.GetGrid(i), 1);
                 }
             }
@@ -159,17 +159,29 @@ public class Grid : MonoBehaviour
 [Serializable]
 public struct GridRelations
 {
-    public Grid[] relatedGrids; //clockwise, starting from 0 = upperGrid
-    public Dictionary<Grid, byte> relatedGridsToDirection;
+    [SerializeField]
+    private Grid[] relatedGrids; //clockwise, starting from 0 = upperGrid
+    private Dictionary<Grid, byte> relatedGridsToDirection;
 
     public GridRelations(bool created = true)
     {
         relatedGrids = new Grid[8];
         relatedGridsToDirection = new Dictionary<Grid, byte>();
+        for(byte i = 0; i < 8; i++)
+        {
+            if (relatedGrids[i] == null)
+                continue;
+            relatedGridsToDirection.Add(relatedGrids[i], i);
+        }
     }
 
 
-    
+    public byte GetGridDirection(Grid g)
+    {
+        if (!relatedGridsToDirection.ContainsKey(g))
+            return 255;
+        return relatedGridsToDirection[g];
+    }
 
     public Grid GetGrid(byte directionID)
     {
@@ -181,6 +193,12 @@ public struct GridRelations
         {
             throw new Exception("the Direction ID provided does not match a direction regarding Grid queries.");
         }
+    }
+
+    public void AddUpdateGrid(byte directionID, Grid g) //interestingly enough if you were to add a grid to a different direction later on, as the transform position would not be updated, visual directions and grid system directions could be conflated, creating some cool effects.
+    {
+        relatedGrids[directionID] = g;
+        relatedGridsToDirection.Add(g, directionID);
     }
 
     public Grid[] GetGrids()
