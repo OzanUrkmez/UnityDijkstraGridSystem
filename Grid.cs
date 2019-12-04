@@ -12,6 +12,14 @@ public class Grid : MonoBehaviour
     [SerializeField]
     private bool isStartGrid = false; //this is primarily so that the semi-automatize function will work.
 
+    [SerializeField]
+    private int depthOfAutoLinkGeneration = 9;
+    [SerializeField]
+    private bool runAutoLinkGeneration = true;
+
+    private static int autoLinkGenerationDepth = -1;
+    private static bool autoLinkGenerationIsRun = false;
+
     private static Grid startGrid;
 
     private static DijkstraMap<Grid> gridMap = new DijkstraMap<Grid>();
@@ -90,38 +98,55 @@ public class Grid : MonoBehaviour
 
     public static void VisualizeGrids()
     {
+        autoLinkGenerationDepth = startGrid.depthOfAutoLinkGeneration;
+        autoLinkGenerationIsRun = startGrid.runAutoLinkGeneration;
         startGrid.ExecuteVisualizationProcedure(startGrid.transform.position, GameProperties.GetGridDimensions());
     }
 
-    private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale)
+    private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale, Stack<Grid> callerGrids = null)
     {
         transform.position = pos;
         transform.localScale = scale;
         positionSet = true;
+        if (callerGrids == null)
+            callerGrids = new Stack<Grid>();
+        callerGrids.Push(this);
         gridRelations.ExecuteOnNonNullGrids(delegate (Grid g, Vector2 v)
         {
             if (g.positionSet)
                 return;
-            SemiAutomatizeRelations(g, v);
+            if(autoLinkGenerationIsRun)
+                SemiAutomatizeRelations(g, v, new Stack<Grid>(callerGrids));
             g.ExecuteVisualizationProcedure(new Vector3(pos.x + (scale.x) * v.x, pos.y,
-                pos.z + (scale.z) * v.y), scale); //if you change this you can create a non-symmetrical Grid system with this code. Like some grids can be larger than others etc. Of course you'd also have to change the relations and the distances in the pathfinding system. Nonetheless some interesting behaviour may be created.
+                pos.z + (scale.z) * v.y), scale, callerGrids); //if you change this you can create a non-symmetrical Grid system with this code. Like some grids can be larger than others etc. Of course you'd also have to change the relations and the distances in the pathfinding system. Nonetheless some interesting behaviour may be created.
         });
     }
 
-    private void SemiAutomatizeRelations(Grid g, Vector2 v) //delete or do not call this if you would like even higher flexibility.
+    private void SemiAutomatizeRelations(Grid g, Vector2 v, Stack<Grid> callerGrids) //delete or do not call this if you would like even higher flexibility.
     {
-        g.gridRelations.relatedGrids[GridRelations.DirectionToID(-v)] = this;
-        gridMap.AddModifyNodeLink(g, this, 1);
-        for (byte i = 0; i < 8; i++)
+        Grid prevCaller = this;
+        Grid caller = this;
+        for (int j = 0; j < autoLinkGenerationDepth && callerGrids.Count > 0; j++)
         {
-            byte id = GridRelations.DirectionToID(GridRelations.GetIDDirection(i) - v);
-            if (id == 255)
-                continue;
-            Grid g2 = gridRelations.GetGrid(i);
-            if (g2 != null)
+            prevCaller = caller;
+            caller = callerGrids.Pop();
+            if(prevCaller != caller)
             {
-                g.gridRelations.relatedGrids[id] = gridRelations.GetGrid(i);
-                gridMap.AddModifyNodeLink(g, gridRelations.GetGrid(i), 1);
+               v += caller.gridRelations
+            }
+            g.gridRelations.relatedGrids[GridRelations.DirectionToID(-v)] = caller;
+            gridMap.AddModifyNodeLink(g, caller, 1);
+            for (byte i = 0; i < 8; i++)
+            {
+                byte id = GridRelations.DirectionToID(GridRelations.GetIDDirection(i) - v);
+                if (id == 255)
+                    continue;
+                Grid g2 = caller.gridRelations.GetGrid(i);
+                if (g2 != null)
+                {
+                    g.gridRelations.relatedGrids[id] = caller.gridRelations.GetGrid(i);
+                    gridMap.AddModifyNodeLink(g, caller.gridRelations.GetGrid(i), 1);
+                }
             }
         }
     }
@@ -135,11 +160,16 @@ public class Grid : MonoBehaviour
 public struct GridRelations
 {
     public Grid[] relatedGrids; //clockwise, starting from 0 = upperGrid
+    public Dictionary<Grid, byte> relatedGridsToDirection;
+
     public GridRelations(bool created = true)
     {
-        relatedGrids = new Grid[8]; 
+        relatedGrids = new Grid[8];
+        relatedGridsToDirection = new Dictionary<Grid, byte>();
     }
 
+
+    
 
     public Grid GetGrid(byte directionID)
     {
