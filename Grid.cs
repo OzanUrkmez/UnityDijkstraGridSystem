@@ -156,6 +156,15 @@ public class Grid : MonoBehaviour
     #endregion
 
     #endregion
+
+    #region Getters
+
+    public Vector3 GetTopOfGrid()
+    {
+        return transform.position + new Vector3(0, transform.localScale.y / 2,0);
+    }
+
+    #endregion
 }
 
 [Serializable]
