@@ -48,11 +48,6 @@ public class Grid : MonoBehaviour
    
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     private void OnDestroy()
     {
@@ -72,7 +67,10 @@ public class Grid : MonoBehaviour
     {
         return gridRelations;
     }
-
+    public Vector3 GetTopOfGrid()
+    {
+        return transform.position + new Vector3(0, transform.localScale.y / 2, 0);
+    }
     #endregion
 
     #endregion
@@ -102,6 +100,7 @@ public class Grid : MonoBehaviour
         autoLinkGenerationDepth = startGrid.depthOfAutoLinkGeneration;
         autoLinkGenerationIsRun = startGrid.runAutoLinkGeneration;
         startGrid.ExecuteVisualizationProcedure(startGrid.transform.position, GameProperties.GetGridDimensions());
+        startGrid.ApplyMaterials();
     }
 
     private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale, Queue<Grid> callerGrids = null)
@@ -147,21 +146,50 @@ public class Grid : MonoBehaviour
                 if (g2 != null)
                 {
                     g.gridRelations.AddUpdateGrid(id,  caller.gridRelations.GetGrid(i));
+                    caller.gridRelations.GetGrid(i).gridRelations.AddUpdateGrid( (byte)((id + 4) % 8), g);
                     gridMap.AddModifyNodeLink(g, caller.gridRelations.GetGrid(i), 1);
                 }
             }
         }
     }
 
-    #endregion
+
 
     #endregion
 
-    #region Getters
+    #endregion
 
-    public Vector3 GetTopOfGrid()
+    #region Bot System
+
+    private AIBot occupantBot;
+
+    public bool isOccupied()
     {
-        return transform.position + new Vector3(0, transform.localScale.y / 2,0);
+        return occupantBot != null;
+    }
+
+    public AIBot GetOccupantBot()
+    {
+        return occupantBot;
+    }
+
+    public bool OccupyGrid(AIBot bot)
+    {
+        if (isOccupied())
+            return false;
+        occupantBot = bot;
+        occupantBot.OnBotOccupyGrid(this);
+        return true;
+    }
+
+    public bool UnOccupyGrid(AIBot bot)
+    {
+        if(occupantBot == bot)
+        {
+            occupantBot = null;
+            return true;
+        }
+        return false;
     }
 
     #endregion
