@@ -100,7 +100,6 @@ public class Grid : MonoBehaviour
         autoLinkGenerationDepth = startGrid.depthOfAutoLinkGeneration;
         autoLinkGenerationIsRun = startGrid.runAutoLinkGeneration;
         startGrid.ExecuteVisualizationProcedure(startGrid.transform.position, GameProperties.GetGridDimensions());
-        startGrid.ApplyMaterials();
     }
 
     private void ExecuteVisualizationProcedure(Vector3 pos, Vector3 scale, Queue<Grid> callerGrids = null)
@@ -159,40 +158,6 @@ public class Grid : MonoBehaviour
 
     #endregion
 
-    #region Bot System
-
-    private AIBot occupantBot;
-
-    public bool isOccupied()
-    {
-        return occupantBot != null;
-    }
-
-    public AIBot GetOccupantBot()
-    {
-        return occupantBot;
-    }
-
-    public bool OccupyGrid(AIBot bot)
-    {
-        if (isOccupied())
-            return false;
-        occupantBot = bot;
-        occupantBot.OnBotOccupyGrid(this);
-        return true;
-    }
-
-    public bool UnOccupyGrid(AIBot bot)
-    {
-        if(occupantBot == bot)
-        {
-            occupantBot = null;
-            return true;
-        }
-        return false;
-    }
-
-    #endregion
 }
 
 [Serializable]
