@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using QuestryGameGeneral.PathFinding;
+
 public class Grid : MonoBehaviour
 {
 
@@ -152,12 +153,6 @@ public class Grid : MonoBehaviour
         }
     }
 
-
-
-    #endregion
-
-    #endregion
-
 }
 
 [Serializable]
@@ -207,6 +202,17 @@ public struct GridRelations
     public Grid[] GetGrids()
     {
         return relatedGrids;
+    }
+
+    public List<Grid> GetNonNullGrids()
+    {
+        List<Grid> returned = new List<Grid>();
+        foreach(Grid g in relatedGrids)
+        {
+            if (g != null)
+                returned.Add(g);
+        }
+        return returned;
     }
 
     public GridRelation GetGridRelation(byte directionID)
